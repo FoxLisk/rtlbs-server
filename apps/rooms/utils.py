@@ -101,7 +101,7 @@ def _get_stats():
 
 
 def get_stats():
-    with cache.lock('stats-lock'):
+    with cache.lock('stats-lock', timeout=60, blocking_timeout=2):
         stats = cache.get('stats')
         if stats is None:
             stats = _get_stats()
@@ -111,7 +111,7 @@ def get_stats():
 
 
 def rebuild_stats():
-    with cache.lock('stats-lock'):
+    with cache.lock('stats-lock', timeout=60, blocking_timeout=2):
         stats = _get_stats()
         cache.set('stats', stats)
         return stats

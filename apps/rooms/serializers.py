@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from rest_framework import serializers
 
 from .models import Room, RoomTime
@@ -30,12 +32,11 @@ class RoomSummarySerializer(RoomSerializer):
         ]
 
     def get_roomtime(self, obj):
-        lbs = self.context['stats']['room_lbs']
-        return lbs[obj.slug][0] if lbs[obj.slug] else {}
+        roomtimes = self.context['stats']['room_lbs'].get(obj.slug, [])
+        return roomtimes[0] if roomtimes else {}
 
     def get_num_roomtimes(self, obj):
-        lbs = self.context['stats']['room_lbs']
-        return len(lbs[obj.slug])
+        return len(self.context['stats']['room_lbs'].get(obj.slug, []))
 
 
 class RoomDetailSerializer(RoomSerializer):
@@ -120,8 +121,7 @@ class RoomTimeSerializer(serializers.ModelSerializer):
         return super().update(obj, validated_data)
 
     def get_shared_ranks(self, obj):
-        lbs = self.context['stats']['room_lbs']
-        for rt in lbs[obj.room.slug]:
+        for rt in self.context['stats']['room_lbs'].get(obj.room.slug, []):
             if rt['id'] == obj.id:
                 return rt['shared_ranks']
 
@@ -133,9 +133,11 @@ class RoomTimeSerializer(serializers.ModelSerializer):
             return
 
         # Make sure the rank corresponds to _this_ roomtime
-        roomtimes = stats['room_lbs'][obj.room.slug]
+        roomtimes = stats['room_lbs'].get(obj.room.slug, [])
         my_roomtimes = [rt for rt in roomtimes if rt['player'] == obj.player.username]
-        if obj.frames != my_roomtimes[0]['frames']:
+        if not my_roomtimes:
+            return
+        if obj.frames != Decimal(str(my_roomtimes[0]['frames'])):
             return
 
         return rank

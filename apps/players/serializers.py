@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from server.apps.rooms.utils import get_stats
+from server.apps.rooms.stats_cache import rebuild_stats
 from .models import Player
 
 
@@ -39,7 +39,7 @@ class PlayerSerializer(serializers.ModelSerializer):
         player = super().create(validated_data)
         player.set_password(password)
         player.save()
-        self.context['stats'] = get_stats()
+        self.context['stats'] = rebuild_stats()
         return player
 
     def get_rank(self, obj):

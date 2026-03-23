@@ -114,7 +114,7 @@ class Command(BaseCommand):
     def update_run(self, data):
         player = self.get_player(data['players'])
         if not player:
-            self.log('No player')
+            self.log(f'No player for run {data["id"]}')
             return
 
         moderator = None
@@ -156,6 +156,7 @@ class Command(BaseCommand):
     def update_categories(self):
         data = self.fetch('https://www.speedrun.com/api/v1/games/9d3rr0dl/variables')
         for parent in data['data']:
+            self.log(f"Handling category {parent}")
             if parent['name'] != 'Sub Category':
                 continue
 

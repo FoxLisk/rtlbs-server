@@ -1,4 +1,4 @@
-from server.apps.rooms.utils import get_stats, rebuild_stats
+from server.apps.rooms.stats_cache import get_stats, rebuild_stats
 
 
 class StatsView(object):

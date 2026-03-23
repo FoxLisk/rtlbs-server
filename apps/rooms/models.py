@@ -4,10 +4,12 @@ import re
 import urllib.parse
 
 from django.conf import settings
-from django.db import models
+from django.db import models, transaction
 from django.template.defaultfilters import slugify
 
 from autoslug import AutoSlugField
+
+from .stats_cache import mark_stats_dirty
 
 
 class Segment(models.Model):
@@ -93,6 +95,12 @@ class RoomTime(models.Model):
         if matcher.match(self.description):
             self.description = ''
         super().save(*args, **kwargs)
+        transaction.on_commit(mark_stats_dirty)
+
+    def delete(self, *args, **kwargs):
+        ret = super().delete(*args, **kwargs)
+        transaction.on_commit(mark_stats_dirty)
+        return ret
 
     def get_media(self):
         if self.twitch_url:
@@ -121,3 +129,10 @@ class RoomTime(models.Model):
             }
 
         return {}
+
+
+class StatsCache(models.Model):
+    key = models.CharField(max_length=50, primary_key=True)
+    payload = models.TextField(null=True, blank=True)
+    dirty = models.BooleanField(default=True)
+    updated_at = models.DateTimeField(auto_now=True)

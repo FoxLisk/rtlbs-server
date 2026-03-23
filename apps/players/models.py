@@ -1,8 +1,10 @@
 # coding: utf-8
 from django.db import models
+from django.db import transaction
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 from django.contrib.auth.validators import ASCIIUsernameValidator
 
+from server.apps.rooms.stats_cache import mark_stats_dirty
 from server.core.validators import UnicodeUsernameValidator
 
 
@@ -44,6 +46,16 @@ class Player(AbstractBaseUser):
 
     USERNAME_FIELD = 'username'
     REQUIRED_FIELDS = []
+
+    def save(self, *args, **kwargs):
+        ret = super().save(*args, **kwargs)
+        transaction.on_commit(mark_stats_dirty)
+        return ret
+
+    def delete(self, *args, **kwargs):
+        ret = super().delete(*args, **kwargs)
+        transaction.on_commit(mark_stats_dirty)
+        return ret
 
     def __str__(self):
         return self.username
